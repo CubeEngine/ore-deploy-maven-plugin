@@ -42,6 +42,9 @@ public class OreDeployMojo extends AbstractMojo
     @Parameter(defaultValue = "${ore.deploy.version}", required = true, readonly = true)
     private String version = null;
 
+    @Parameter(defaultValue = "${ore.deploy.channel}", readonly = true)
+    private String channel = "release";
+
     @Parameter(defaultValue = "${ore.deploy.apikey}", required = true, readonly = true)
     private String apiKey = null;
 
@@ -52,15 +55,13 @@ public class OreDeployMojo extends AbstractMojo
     @Override
     public final void execute() throws MojoExecutionException, MojoFailureException
     {
-        getLog().info("Uploading plugin " + pluginId + " ...");
+        String artifact = project.getArtifact().getFile().toPath().toString();
+        getLog().info("curl \\"
+                          + " -F \"apiKey=<apiKey>\" \\"
+                          + " -F \"channel=" + channel + "\" \\"
+                          + " -F \"pluginFile=@" + artifact + "\" \\"
+                          + " -F \"pluginSig=@" + artifact + ".asc\" \\"
+                          + " https://ore.spongepowered.org/api/projects/" + pluginId + "versions/" + version);
 
-        /*
-        curl \
-  -F "apiKey=<apiKey>" \
-  -F "channel=test2" \
-  -F "pluginFile=@.jar" \
-  -F "pluginSig=@.jar.sig" \
-https://ore.spongepowered.org/api/projects/<pluginid>/versions/<version>
-        */
     }
 }
