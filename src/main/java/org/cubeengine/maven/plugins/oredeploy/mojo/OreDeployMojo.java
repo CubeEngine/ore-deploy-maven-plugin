@@ -22,12 +22,24 @@
  */
 package org.cubeengine.maven.plugins.oredeploy.mojo;
 
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.StringBody;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+
+import java.io.File;
+import java.io.IOException;
 
 @Mojo(name = "deploy", threadSafe = true)
 public class OreDeployMojo extends AbstractMojo
@@ -58,14 +70,28 @@ public class OreDeployMojo extends AbstractMojo
     @Override
     public final void execute() throws MojoExecutionException, MojoFailureException
     {
-        String artifact = project.getArtifact().getFile().toPath().toString();
-        String channel = project.getArtifact().isRelease() ? releaseChannel : snapshotChannel;
-        getLog().info("curl \\"
-                          + " -F \"apiKey=<apiKey>\" \\"
-                          + " -F \"channel=" + channel + "\" \\"
-                          + " -F \"pluginFile=@" + artifact + "\" \\"
-                          + " -F \"pluginSig=@" + artifact + ".asc\" \\"
-                          + " https://ore.spongepowered.org/api/projects/" + pluginId + "/versions/" + version);
+        Artifact artifact = project.getArtifact();
+        File artifactFile = artifact.getFile();
+        File artifactSigFile = new File(artifactFile.getAbsolutePath() + ".asc");
+        final String channel = artifact.isRelease() ? releaseChannel : snapshotChannel;
+
+        try (CloseableHttpClient client = HttpClients.createDefault()) {
+            HttpPost post = new HttpPost("https://ore.spongepowered.org/api/projects/" + pluginId + "/versions/" + version);
+            MultipartEntityBuilder entity = MultipartEntityBuilder.create();
+            entity.addPart("apiKey", new StringBody(apiKey, ContentType.TEXT_PLAIN));
+            entity.addPart("channel", new StringBody(channel, ContentType.TEXT_PLAIN));
+            entity.addPart("pluginFile", new FileBody(artifactFile, ContentType.APPLICATION_OCTET_STREAM));
+            entity.addPart("pluginSig", new FileBody(artifactSigFile, ContentType.APPLICATION_OCTET_STREAM));
+            post.setEntity(entity.build());
+            try (CloseableHttpResponse response = client.execute(post)) {
+                if (response.getStatusLine().getStatusCode() != 200) {
+                    getLog().error("Plugin upload failed because the remote endpoint returned an unsuccessful response:");
+                    getLog().error(response.getStatusLine().toString());
+                }
+            }
+        } catch (IOException e) {
+            getLog().error("Upload failed due to IO error!", e);
+        }
 
     }
 }
