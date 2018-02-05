@@ -47,6 +47,8 @@ import java.util.Properties;
 @Mojo(name = "deploy", threadSafe = true)
 public class OreDeployMojo extends AbstractMojo
 {
+    private static final String ORE_BASE_URL = "https://ore.spongepowered.org";
+    private static final String ORE_DEPLOY_ENDPOINT = "/api/projects/%s/versions/%s";
 
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     private MavenProject project = null;
@@ -98,8 +100,10 @@ public class OreDeployMojo extends AbstractMojo
             throw new MojoFailureException("No API key found for the plugin id '" + pluginId + "'!");
         }
 
+        final String url = ORE_BASE_URL + String.format(ORE_DEPLOY_ENDPOINT, pluginId, version);
+        getLog().info("Uploading plugin to " + url);
         try (CloseableHttpClient client = HttpClients.createDefault()) {
-            HttpPost post = new HttpPost("https://ore.spongepowered.org/api/projects/" + pluginId + "/versions/" + version);
+            HttpPost post = new HttpPost(url);
             MultipartEntityBuilder entity = MultipartEntityBuilder.create();
             entity.addPart("apiKey", new StringBody(apiKey, ContentType.TEXT_PLAIN));
             entity.addPart("channel", new StringBody(channel, ContentType.TEXT_PLAIN));
