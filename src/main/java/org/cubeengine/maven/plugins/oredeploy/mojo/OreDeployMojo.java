@@ -39,7 +39,11 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
+import java.util.Properties;
 
 @Mojo(name = "deploy", threadSafe = true)
 public class OreDeployMojo extends AbstractMojo
@@ -60,8 +64,11 @@ public class OreDeployMojo extends AbstractMojo
     @Parameter(defaultValue = "${ore.deploy.channel.snapshot}", readonly = true)
     private String snapshotChannel = "snapshot";
 
-    @Parameter(defaultValue = "${ore.deploy.apikey}", required = true, readonly = true)
+    @Parameter(defaultValue = "${ore.deploy.apikey}", readonly = true)
     private String apiKey = null;
+
+    @Parameter(defaultValue = "${ore.deploy.apikey-lookup}")
+    private File apiKeyLookup = null;
 
 
     /**
@@ -74,6 +81,23 @@ public class OreDeployMojo extends AbstractMojo
         File artifactFile = artifact.getFile();
         File artifactSigFile = new File(artifactFile.getAbsolutePath() + ".asc");
         final String channel = artifact.isRelease() ? releaseChannel : snapshotChannel;
+
+        String apiKey = this.apiKey;
+        if (apiKey == null) {
+            apiKey = project.getProperties().getProperty("ore.deploy.apikey." + pluginId, null);
+        }
+        if (apiKey == null && apiKeyLookup != null && apiKeyLookup.canRead()) {
+            try (Reader lookupReader = new FileReader(apiKeyLookup)) {
+                Properties lookup = new Properties();
+                lookup.load(lookupReader);
+                apiKey = lookup.getProperty(pluginId, null);
+            } catch (IOException e) {
+                throw new MojoExecutionException("Failed to load API key lookup table", e);
+            }
+        }
+        if (apiKey == null) {
+            throw new MojoFailureException("No API key found for the plugin id '" + pluginId + "'!");
+        }
 
         try (CloseableHttpClient client = HttpClients.createDefault()) {
             HttpPost post = new HttpPost("https://ore.spongepowered.org/api/projects/" + pluginId + "/versions/" + version);
