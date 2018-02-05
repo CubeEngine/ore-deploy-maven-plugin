@@ -42,8 +42,11 @@ public class OreDeployMojo extends AbstractMojo
     @Parameter(defaultValue = "${ore.deploy.version}", required = true, readonly = true)
     private String version = null;
 
-    @Parameter(defaultValue = "${ore.deploy.channel}", readonly = true)
-    private String channel = "release";
+    @Parameter(defaultValue = "${ore.deploy.channel.release}", readonly = true)
+    private String releaseChannel = "release";
+
+    @Parameter(defaultValue = "${ore.deploy.channel.snapshot}", readonly = true)
+    private String snapshotChannel = "snapshot";
 
     @Parameter(defaultValue = "${ore.deploy.apikey}", required = true, readonly = true)
     private String apiKey = null;
@@ -56,6 +59,7 @@ public class OreDeployMojo extends AbstractMojo
     public final void execute() throws MojoExecutionException, MojoFailureException
     {
         String artifact = project.getArtifact().getFile().toPath().toString();
+        String channel = project.getArtifact().isRelease() ? releaseChannel : snapshotChannel;
         getLog().info("curl \\"
                           + " -F \"apiKey=<apiKey>\" \\"
                           + " -F \"channel=" + channel + "\" \\"
