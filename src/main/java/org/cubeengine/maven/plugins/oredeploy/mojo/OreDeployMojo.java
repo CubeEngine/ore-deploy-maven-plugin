@@ -65,7 +65,7 @@ public class OreDeployMojo extends AbstractMojo
                           + " -F \"channel=" + channel + "\" \\"
                           + " -F \"pluginFile=@" + artifact + "\" \\"
                           + " -F \"pluginSig=@" + artifact + ".asc\" \\"
-                          + " https://ore.spongepowered.org/api/projects/" + pluginId + "versions/" + version);
+                          + " https://ore.spongepowered.org/api/projects/" + pluginId + "/versions/" + version);
 
     }
 }
