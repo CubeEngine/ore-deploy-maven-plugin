@@ -111,7 +111,7 @@ public class OreDeployMojo extends AbstractMojo
             entity.addPart("pluginSig", new FileBody(artifactSigFile, ContentType.APPLICATION_OCTET_STREAM));
             post.setEntity(entity.build());
             try (CloseableHttpResponse response = client.execute(post)) {
-                if (response.getStatusLine().getStatusCode() != 200) {
+                if (response.getStatusLine().getStatusCode() != 201) {
                     throw new MojoFailureException("Plugin upload failed because the remote endpoint returned an unsuccessful response: " + response.getStatusLine());
                 }
             }
