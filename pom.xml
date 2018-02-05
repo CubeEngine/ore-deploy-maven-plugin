@@ -28,8 +28,8 @@
 
     <scm>
         <url>https://github.com/CubeEngine/ore-deploy-maven-plugin</url>
-        <connection>scm:git:https://github.com/CubeEngine/ore-deploy-maven-plugin</connection>
-        <developerConnection>scm:git:https://github.com/CubeEngine/ore-deploy-maven-plugin</developerConnection>
+        <connection>scm:git:https://github.com/CubeEngine/ore-deploy-maven-plugin.git</connection>
+        <developerConnection>scm:git:git@github.com:CubeEngine/ore-deploy-maven-plugin.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
@@ -53,6 +53,14 @@
 
     <developers>
         <developer>
+            <id>pschichtel</id>
+            <name>Phillip Schichtel</name>
+            <email>phillip@schich.tel</email>
+            <roles>
+                <role>Project Lead</role>
+            </roles>
+        </developer>
+        <developer>
             <id>abrehme</id>
             <name>Anselm Brehme</name>
             <roles>
@@ -64,6 +72,7 @@
     <properties>
         <jdkVersion>1.8</jdkVersion>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <releaseProfile>release</releaseProfile>
     </properties>
 
     <dependencies>
@@ -101,29 +110,19 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>2.5</version>
+                <version>2.5.3</version>
                 <configuration>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                     <useReleaseProfile>false</useReleaseProfile>
-                    <releaseProfiles>release</releaseProfiles>
+                    <releaseProfiles>${releaseProfile}</releaseProfiles>
                     <goals>deploy</goals>
+                    <arguments>-P${releaseProfile}</arguments>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
                 <version>2.8.2</version>
-            </plugin>
-            <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>1.6.4</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <serverId>ossrh</serverId>
-                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -162,6 +161,23 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-plugin-plugin</artifactId>
+                <version>3.5.1</version>
+                <executions>
+                    <execution>
+                        <id>default-descriptor</id>
+                        <phase>process-classes</phase>
+                    </execution>
+                    <execution>
+                        <id>help-goal</id>
+                        <goals>
+                            <goal>helpmojo</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
@@ -171,9 +187,20 @@
             <build>
                 <plugins>
                     <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.8</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                        </configuration>
+                    </plugin>
+                    <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>2.3</version>
+                        <version>3.0.1</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -186,7 +213,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.10</version>
+                        <version>2.10.4</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -199,30 +226,13 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.5</version>
+                        <version>1.6</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
                                 <phase>verify</phase>
                                 <goals>
                                     <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-plugin-plugin</artifactId>
-                        <version>3.5.1</version>
-                        <executions>
-                            <execution>
-                                <id>default-descriptor</id>
-                                <phase>process-classes</phase>
-                            </execution>
-                            <execution>
-                                <id>help-goal</id>
-                                <goals>
-                                    <goal>helpmojo</goal>
                                 </goals>
                             </execution>
                         </executions>
