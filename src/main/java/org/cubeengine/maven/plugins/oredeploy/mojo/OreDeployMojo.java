@@ -85,12 +85,11 @@ public class OreDeployMojo extends AbstractMojo
             post.setEntity(entity.build());
             try (CloseableHttpResponse response = client.execute(post)) {
                 if (response.getStatusLine().getStatusCode() != 200) {
-                    getLog().error("Plugin upload failed because the remote endpoint returned an unsuccessful response:");
-                    getLog().error(response.getStatusLine().toString());
+                    throw new MojoFailureException("Plugin upload failed because the remote endpoint returned an unsuccessful response: " + response.getStatusLine());
                 }
             }
         } catch (IOException e) {
-            getLog().error("Upload failed due to IO error!", e);
+            throw new MojoExecutionException("Upload failed due to IO error!", e);
         }
 
     }
