@@ -10,7 +10,7 @@
 
     <groupId>org.cubeengine.maven.plugins</groupId>
     <artifactId>ore-deploy-maven-plugin</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>${project.artifactId}</name>
@@ -29,7 +29,7 @@
         <url>https://github.com/CubeEngine/ore-deploy-maven-plugin</url>
         <connection>scm:git:https://github.com/CubeEngine/ore-deploy-maven-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:CubeEngine/ore-deploy-maven-plugin.git</developerConnection>
-        <tag>ore-deploy-maven-plugin-1.0.0</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <prerequisites>
