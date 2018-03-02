@@ -80,9 +80,13 @@ public class OreDeployMojo extends AbstractMojo
     public final void execute() throws MojoExecutionException, MojoFailureException
     {
         Artifact artifact = project.getArtifact();
+        final String channel = artifact.isSnapshot() ? snapshotChannel : releaseChannel;
+
         File artifactFile = artifact.getFile();
         File artifactSigFile = new File(artifactFile.getAbsolutePath() + ".asc");
-        final String channel = artifact.isSnapshot() ? snapshotChannel : releaseChannel;
+        if (!artifactSigFile.isFile() || !artifactSigFile.canRead()) {
+            throw new MojoFailureException("Unable to read the signature of the main artifact: " + artifactSigFile.getPath());
+        }
 
         String apiKey = this.apiKey;
         if (apiKey == null) {
