@@ -30,6 +30,7 @@ import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -81,7 +82,7 @@ public class OreDeployMojo extends AbstractMojo
         Artifact artifact = project.getArtifact();
         File artifactFile = artifact.getFile();
         File artifactSigFile = new File(artifactFile.getAbsolutePath() + ".asc");
-        final String channel = artifact.isRelease() ? releaseChannel : snapshotChannel;
+        final String channel = artifact.isSnapshot() ? snapshotChannel : releaseChannel;
 
         String apiKey = this.apiKey;
         if (apiKey == null) {
@@ -101,7 +102,7 @@ public class OreDeployMojo extends AbstractMojo
         }
 
         final String url = ORE_BASE_URL + String.format(ORE_DEPLOY_ENDPOINT, pluginId, version);
-        getLog().info("Uploading plugin to " + url);
+        getLog().info("Uploading plugin to " + url + " in channel " + channel);
         try (CloseableHttpClient client = HttpClients.createDefault()) {
             HttpPost post = new HttpPost(url);
             MultipartEntityBuilder entity = MultipartEntityBuilder.create();
@@ -112,7 +113,8 @@ public class OreDeployMojo extends AbstractMojo
             post.setEntity(entity.build());
             try (CloseableHttpResponse response = client.execute(post)) {
                 if (response.getStatusLine().getStatusCode() != 201) {
-                    throw new MojoFailureException("Plugin upload failed because the remote endpoint returned an unsuccessful response: " + response.getStatusLine());
+                    String responseString = EntityUtils.toString(response.getEntity());
+                    throw new MojoFailureException("Plugin upload failed because the remote endpoint returned an unsuccessful response: " + response.getStatusLine() + "\n" + responseString);
                 }
             }
         } catch (IOException e) {
