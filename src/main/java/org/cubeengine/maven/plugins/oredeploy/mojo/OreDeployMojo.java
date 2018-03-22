@@ -72,7 +72,7 @@ public class OreDeployMojo extends AbstractMojo
     @Parameter(defaultValue = "${ore.deploy.apikey-lookup}")
     private File apiKeyLookup = null;
 
-    @Parameter(defaultValue = "${project.build.finalName}")
+    @Parameter(defaultValue = "${project.build.finalName}.jar")
     private String fileName = null;
 
 
