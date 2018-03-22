@@ -72,6 +72,9 @@ public class OreDeployMojo extends AbstractMojo
     @Parameter(defaultValue = "${ore.deploy.apikey-lookup}")
     private File apiKeyLookup = null;
 
+    @Parameter(defaultValue = "${project.build.finalName}")
+    private String fileName = null;
+
 
     /**
      * {@inheritDoc}
@@ -106,14 +109,16 @@ public class OreDeployMojo extends AbstractMojo
         }
 
         final String url = ORE_BASE_URL + String.format(ORE_DEPLOY_ENDPOINT, pluginId, version);
+        final String jarFileName = fileName;
+        final String sigFileName = fileName + ".sig";
         getLog().info("Uploading plugin to " + url + " in channel " + channel);
         try (CloseableHttpClient client = HttpClients.createDefault()) {
             HttpPost post = new HttpPost(url);
             MultipartEntityBuilder entity = MultipartEntityBuilder.create();
             entity.addPart("apiKey", new StringBody(apiKey, ContentType.TEXT_PLAIN));
             entity.addPart("channel", new StringBody(channel, ContentType.TEXT_PLAIN));
-            entity.addPart("pluginFile", new FileBody(artifactFile, ContentType.APPLICATION_OCTET_STREAM));
-            entity.addPart("pluginSig", new FileBody(artifactSigFile, ContentType.APPLICATION_OCTET_STREAM));
+            entity.addPart("pluginFile", new FileBody(artifactFile, ContentType.APPLICATION_OCTET_STREAM, jarFileName));
+            entity.addPart("pluginSig", new FileBody(artifactSigFile, ContentType.APPLICATION_OCTET_STREAM, sigFileName));
             post.setEntity(entity.build());
             try (CloseableHttpResponse response = client.execute(post)) {
                 if (response.getStatusLine().getStatusCode() != 201) {
