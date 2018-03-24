@@ -83,7 +83,8 @@ public class OreDeployMojo extends AbstractMojo
     public final void execute() throws MojoExecutionException, MojoFailureException
     {
         Artifact artifact = project.getArtifact();
-        final String channel = artifact.isSnapshot() ? snapshotChannel : releaseChannel;
+        boolean isSnapshot = artifact.isSnapshot();
+        final String channel = isSnapshot ? snapshotChannel : releaseChannel;
 
         File artifactFile = artifact.getFile();
         File artifactSigFile = new File(artifactFile.getAbsolutePath() + ".asc");
@@ -119,6 +120,8 @@ public class OreDeployMojo extends AbstractMojo
             entity.addPart("channel", new StringBody(channel, ContentType.TEXT_PLAIN));
             entity.addPart("pluginFile", new FileBody(artifactFile, ContentType.APPLICATION_OCTET_STREAM, jarFileName));
             entity.addPart("pluginSig", new FileBody(artifactSigFile, ContentType.APPLICATION_OCTET_STREAM, sigFileName));
+            entity.addPart("forumPost", new StringBody(isSnapshot ? "false" : "true", ContentType.TEXT_PLAIN));
+            entity.addPart("recommended", new StringBody(isSnapshot ? "false" : "true", ContentType.TEXT_PLAIN));
             post.setEntity(entity.build());
             try (CloseableHttpResponse response = client.execute(post)) {
                 if (response.getStatusLine().getStatusCode() != 201) {
