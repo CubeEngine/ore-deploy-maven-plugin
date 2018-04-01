@@ -43,6 +43,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Objects;
 import java.util.Properties;
 
 @Mojo(name = "deploy", threadSafe = true)
@@ -75,6 +76,11 @@ public class OreDeployMojo extends AbstractMojo
     @Parameter(defaultValue = "${project.build.finalName}.jar")
     private String fileName = null;
 
+    @Parameter(defaultValue = "${ore.deploy.classifier}")
+    private String classifier = null;
+
+    @Parameter(defaultValue = "${ore.deploy.fallbackToMainArtifact}")
+    private boolean fallbackToMainArtifact = true;
 
     /**
      * {@inheritDoc}
@@ -82,14 +88,39 @@ public class OreDeployMojo extends AbstractMojo
     @Override
     public final void execute() throws MojoExecutionException, MojoFailureException
     {
-        Artifact artifact = project.getArtifact();
-        boolean isSnapshot = artifact.isSnapshot();
+        Artifact jarArtifact = lookupArtifact(project, classifier, "jar");
+        Artifact sigArtifact = lookupArtifact(project, classifier, "jar.asc");
+
+        if (jarArtifact == null)
+        {
+            if (fallbackToMainArtifact)
+            {
+                jarArtifact = project.getArtifact();
+                sigArtifact = lookupArtifact(project, jarArtifact.getClassifier(), "jar.asc");
+            }
+            else
+            {
+                throw new MojoFailureException("Artifact with classifier '" + classifier + "' was not found!");
+            }
+        }
+
+        if (sigArtifact == null)
+        {
+            throw new MojoFailureException("No signature has been attached for the selected artifact: " + jarArtifact);
+        }
+
+        boolean isSnapshot = jarArtifact.isSnapshot();
         final String channel = isSnapshot ? snapshotChannel : releaseChannel;
 
-        File artifactFile = artifact.getFile();
-        File artifactSigFile = new File(artifactFile.getAbsolutePath() + ".asc");
+        File artifactJarFile = jarArtifact.getFile();
+        File artifactSigFile = sigArtifact.getFile();
+
+        if (!artifactJarFile.isFile() || !artifactJarFile.canRead()) {
+            throw new MojoFailureException("Unable to read the jar artifact: " + artifactSigFile.getPath());
+        }
+
         if (!artifactSigFile.isFile() || !artifactSigFile.canRead()) {
-            throw new MojoFailureException("Unable to read the signature of the main artifact: " + artifactSigFile.getPath());
+            throw new MojoFailureException("Unable to read the signature artifact: " + artifactSigFile.getPath());
         }
 
         String apiKey = this.apiKey;
@@ -118,7 +149,7 @@ public class OreDeployMojo extends AbstractMojo
             MultipartEntityBuilder entity = MultipartEntityBuilder.create();
             entity.addPart("apiKey", new StringBody(apiKey, ContentType.TEXT_PLAIN));
             entity.addPart("channel", new StringBody(channel, ContentType.TEXT_PLAIN));
-            entity.addPart("pluginFile", new FileBody(artifactFile, ContentType.APPLICATION_OCTET_STREAM, jarFileName));
+            entity.addPart("pluginFile", new FileBody(artifactJarFile, ContentType.APPLICATION_OCTET_STREAM, jarFileName));
             entity.addPart("pluginSig", new FileBody(artifactSigFile, ContentType.APPLICATION_OCTET_STREAM, sigFileName));
             entity.addPart("forumPost", new StringBody(isSnapshot ? "false" : "true", ContentType.TEXT_PLAIN));
             entity.addPart("recommended", new StringBody(isSnapshot ? "false" : "true", ContentType.TEXT_PLAIN));
@@ -133,5 +164,15 @@ public class OreDeployMojo extends AbstractMojo
             throw new MojoExecutionException("Upload failed due to IO error!", e);
         }
 
+    }
+
+    private static Artifact lookupArtifact(MavenProject project, String classifier, String type) {
+        for (Artifact artifact : project.getAttachedArtifacts()) {
+
+            if (Objects.equals(artifact.getClassifier(), classifier) && artifact.getType().equals(type)) {
+                return artifact;
+            }
+        }
+        return null;
     }
 }
