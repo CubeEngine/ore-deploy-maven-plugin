@@ -147,12 +147,12 @@ public class OreDeployMojo extends AbstractMojo
         try (CloseableHttpClient client = HttpClients.createDefault()) {
             HttpPost post = new HttpPost(url);
             MultipartEntityBuilder entity = MultipartEntityBuilder.create();
-            entity.addPart("apiKey", new StringBody(apiKey, ContentType.TEXT_PLAIN));
-            entity.addPart("channel", new StringBody(channel, ContentType.TEXT_PLAIN));
-            entity.addPart("pluginFile", new FileBody(artifactJarFile, ContentType.APPLICATION_OCTET_STREAM, jarFileName));
-            entity.addPart("pluginSig", new FileBody(artifactSigFile, ContentType.APPLICATION_OCTET_STREAM, sigFileName));
-            entity.addPart("forumPost", new StringBody(isSnapshot ? "false" : "true", ContentType.TEXT_PLAIN));
-            entity.addPart("recommended", new StringBody(isSnapshot ? "false" : "true", ContentType.TEXT_PLAIN));
+            entity.addPart("apiKey", stringBody(apiKey));
+            entity.addPart("channel", stringBody(channel));
+            entity.addPart("pluginFile", fileBody(artifactJarFile, jarFileName));
+            entity.addPart("pluginSig", fileBody(artifactSigFile, sigFileName));
+            entity.addPart("forumPost", stringBody(isSnapshot ? "false" : "true"));
+            entity.addPart("recommended", stringBody(isSnapshot ? "false" : "true"));
             post.setEntity(entity.build());
             try (CloseableHttpResponse response = client.execute(post)) {
                 if (response.getStatusLine().getStatusCode() != 201) {
@@ -164,6 +164,16 @@ public class OreDeployMojo extends AbstractMojo
             throw new MojoExecutionException("Upload failed due to IO error!", e);
         }
 
+    }
+
+    private FileBody fileBody(File artifactJarFile, String jarFileName)
+    {
+        return new FileBody(artifactJarFile, ContentType.APPLICATION_OCTET_STREAM, jarFileName);
+    }
+
+    private StringBody stringBody(String channel)
+    {
+        return new StringBody(channel, ContentType.TEXT_PLAIN);
     }
 
     private static Artifact lookupArtifact(MavenProject project, String classifier, String type) {
