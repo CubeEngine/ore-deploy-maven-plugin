@@ -50,7 +50,7 @@ import java.util.Properties;
 public class OreDeployMojo extends AbstractMojo
 {
     private static final String ORE_BASE_URL = "https://ore.spongepowered.org";
-    private static final String ORE_DEPLOY_ENDPOINT = "/api/projects/%s/versions/%s";
+    private static final String ORE_DEPLOY_ENDPOINT = "/api/v1/projects/%s/versions/%s";
 
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     private MavenProject project = null;
